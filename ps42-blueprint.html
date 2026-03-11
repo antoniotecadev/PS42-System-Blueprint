@@ -1,0 +1,1779 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PS42 Luanda — System Blueprint</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --black: #0a0a0a;
+    --white: #f5f5f0;
+    --red: #e63329;
+    --red-dim: #7a1a16;
+    --blue-42: #00babc;
+    --blue-dim: #004f50;
+    --gold: #f5a623;
+    --green: #2ecc71;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --surface3: #222222;
+    --border: #2a2a2a;
+    --text-muted: #666;
+    --text-secondary: #999;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .hero {
+    position: relative;
+    padding: 80px 60px 60px;
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(0,186,188,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(0,186,188,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,186,188,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,186,188,0.1);
+    border: 1px solid rgba(0,186,188,0.3);
+    color: var(--blue-42);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 6px 14px;
+    border-radius: 2px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .hero-tag::before { content: '◆'; font-size: 8px; }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(42px, 6vw, 80px);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -2px;
+    position: relative;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--blue-42);
+  }
+  .hero h1 span {
+    display: block;
+    color: var(--red);
+  }
+  .hero-sub {
+    margin-top: 24px;
+    font-size: 15px;
+    color: var(--text-secondary);
+    max-width: 560px;
+    line-height: 1.7;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 40px;
+    margin-top: 48px;
+    flex-wrap: wrap;
+  }
+  .hero-meta-item { }
+  .hero-meta-item .label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .hero-meta-item .value {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .version-badge {
+    position: absolute;
+    top: 80px;
+    right: 60px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* ── NAV TABS ── */
+  .nav-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    padding: 0 60px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 20px 24px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { color: var(--white); }
+  .tab-btn.active {
+    color: var(--blue-42);
+    border-bottom-color: var(--blue-42);
+  }
+
+  /* ── SECTIONS ── */
+  .section { display: none; padding: 60px; }
+  .section.active { display: block; }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    letter-spacing: -1px;
+  }
+  .section-desc {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 48px;
+    max-width: 600px;
+    line-height: 1.7;
+  }
+
+  /* ── MODULES GRID ── */
+  .modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .module-card {
+    background: var(--surface);
+    padding: 32px;
+    cursor: pointer;
+    transition: background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .module-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent, var(--blue-42));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+  .module-card:hover { background: var(--surface2); }
+  .module-card:hover::before { transform: scaleX(1); }
+
+  .module-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+  .module-icon {
+    font-size: 28px;
+    margin-bottom: 12px;
+    display: block;
+  }
+  .module-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .module-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+  .module-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .feature-tag {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    letter-spacing: 0.5px;
+  }
+  .module-role {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+  .role-cadete { background: rgba(0,186,188,0.1); color: var(--blue-42); border: 1px solid rgba(0,186,188,0.3); }
+  .role-staff { background: rgba(230,51,41,0.1); color: var(--red); border: 1px solid rgba(230,51,41,0.3); }
+  .role-both { background: rgba(245,166,35,0.1); color: var(--gold); border: 1px solid rgba(245,166,35,0.3); }
+
+  /* ── DATA FLOW ── */
+  .flow-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 2px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 48px;
+  }
+  .flow-col {
+    background: var(--surface);
+    padding: 32px;
+  }
+  .flow-col-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .flow-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .flow-item:last-child { border-bottom: none; }
+  .flow-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--blue-42);
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+  .flow-dot.red { background: var(--red); }
+  .flow-dot.gold { background: var(--gold); }
+  .flow-dot.green { background: var(--green); }
+  .flow-item-text { font-size: 13px; line-height: 1.5; }
+  .flow-item-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: 'Space Mono', monospace; }
+
+  /* ── DB SCHEMA ── */
+  .schema-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .table-header {
+    background: var(--surface3);
+    padding: 14px 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--blue-42);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .table-header .table-icon { font-size: 16px; }
+  .table-fields { padding: 8px 0; }
+  .field-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 7px 20px;
+    font-size: 12px;
+    border-bottom: 1px solid rgba(42,42,42,0.5);
+  }
+  .field-row:last-child { border-bottom: none; }
+  .field-name { color: var(--white); font-family: 'Space Mono', monospace; font-size: 11px; flex: 1; }
+  .field-type { color: var(--text-muted); font-size: 10px; font-family: 'Space Mono', monospace; }
+  .field-pk { background: rgba(245,166,35,0.15); color: var(--gold); border: 1px solid rgba(245,166,35,0.3); font-family: 'Space Mono', monospace; font-size: 9px; padding: 1px 5px; border-radius: 2px; }
+  .field-fk { background: rgba(0,186,188,0.1); color: var(--blue-42); border: 1px solid rgba(0,186,188,0.3); font-family: 'Space Mono', monospace; font-size: 9px; padding: 1px 5px; border-radius: 2px; }
+  .field-idx { background: rgba(46,204,113,0.1); color: var(--green); font-family: 'Space Mono', monospace; font-size: 9px; padding: 1px 5px; border-radius: 2px; }
+
+  /* ── API EXPLORER ── */
+  .api-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .api-endpoint {
+    background: var(--surface);
+    padding: 24px 28px;
+    transition: background 0.2s;
+  }
+  .api-endpoint:hover { background: var(--surface2); }
+  .api-method {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+  .method-get { background: rgba(46,204,113,0.15); color: var(--green); }
+  .method-post { background: rgba(0,186,188,0.15); color: var(--blue-42); }
+  .api-path {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+  .api-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  .api-returns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .api-return-tag {
+    background: var(--surface3);
+    color: var(--text-muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 2px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── USER FLOWS ── */
+  .flow-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 40px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .flow-title-bar {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .flow-steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    row-gap: 16px;
+  }
+  .flow-step {
+    display: flex;
+    align-items: center;
+  }
+  .step-box {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    padding: 12px 18px;
+    font-size: 12px;
+    text-align: center;
+    min-width: 120px;
+    position: relative;
+    transition: all 0.2s;
+  }
+  .step-box:hover {
+    background: var(--surface2);
+    border-color: var(--blue-42);
+  }
+  .step-box .step-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .step-box .step-label { font-size: 12px; line-height: 1.3; }
+  .step-arrow {
+    width: 32px;
+    height: 1px;
+    background: var(--border);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .step-arrow::after {
+    content: '▶';
+    position: absolute;
+    right: -4px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 8px;
+    color: var(--text-muted);
+  }
+  .step-box.success { border-color: rgba(46,204,113,0.4); background: rgba(46,204,113,0.05); }
+  .step-box.warning { border-color: rgba(245,166,35,0.4); background: rgba(245,166,35,0.05); }
+  .step-box.danger { border-color: rgba(230,51,41,0.4); background: rgba(230,51,41,0.05); }
+  .step-box.primary { border-color: rgba(0,186,188,0.4); background: rgba(0,186,188,0.05); }
+
+  /* ── TECH STACK ── */
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 2px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 48px;
+  }
+  .stack-item {
+    background: var(--surface);
+    padding: 24px;
+    transition: background 0.2s;
+  }
+  .stack-item:hover { background: var(--surface2); }
+  .stack-category {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .stack-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .stack-reason { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+
+  /* ── TIMELINE ── */
+  .timeline {
+    position: relative;
+    padding-left: 32px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--border);
+  }
+  .timeline-phase {
+    position: relative;
+    margin-bottom: 48px;
+  }
+  .timeline-phase::before {
+    content: '';
+    position: absolute;
+    left: -36px;
+    top: 6px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--blue-42);
+    border: 2px solid var(--black);
+  }
+  .phase-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .phase-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--blue-42);
+    letter-spacing: 2px;
+  }
+  .phase-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+  }
+  .phase-tasks {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 8px;
+  }
+  .task-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 14px 18px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .task-check {
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--blue-42);
+  }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 48px;
+  }
+  .stat-card {
+    background: var(--surface);
+    padding: 28px 24px;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 40px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 6px;
+    background: linear-gradient(135deg, var(--white), var(--blue-42));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── ELIGIBILITY RULES ── */
+  .rules-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  .rule-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    position: relative;
+  }
+  .rule-card.required { border-left: 3px solid var(--red); }
+  .rule-card.metric { border-left: 3px solid var(--blue-42); }
+  .rule-card.conditional { border-left: 3px solid var(--gold); }
+  .rule-type {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  .rule-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .rule-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+  .rule-api {
+    margin-top: 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--blue-42);
+    background: rgba(0,186,188,0.05);
+    border: 1px solid rgba(0,186,188,0.15);
+    padding: 6px 10px;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: gap;
+  }
+  .footer-brand {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+  }
+  .footer-brand em { font-style: normal; color: var(--blue-42); }
+  .footer-note {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--black); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+
+  @media (max-width: 768px) {
+    .hero { padding: 48px 24px 40px; }
+    .section { padding: 40px 24px; }
+    .nav-tabs { padding: 0 24px; }
+    .flow-container { grid-template-columns: 1fr; }
+    .api-grid { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .rules-grid { grid-template-columns: 1fr; }
+    .version-badge { display: none; }
+    footer { padding: 32px 24px; flex-direction: column; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-tag">System Blueprint · v1.0</div>
+  <h1>
+    <em>PS42</em>
+    <span>Luanda</span>
+  </h1>
+  <p class="hero-sub">
+    Documento de arquitectura completo para o sistema de gestão da PlayStation da 42 Luanda.
+    Este blueprint define todos os módulos, entidades de dados, fluxos de utilizador e decisões técnicas.
+  </p>
+  <div class="hero-meta">
+    <div class="hero-meta-item">
+      <div class="label">Módulos</div>
+      <div class="value" style="color:var(--blue-42)">18</div>
+    </div>
+    <div class="hero-meta-item">
+      <div class="label">Tabelas DB</div>
+      <div class="value" style="color:var(--gold)">12</div>
+    </div>
+    <div class="hero-meta-item">
+      <div class="label">Endpoints API</div>
+      <div class="value" style="color:var(--green)">42+</div>
+    </div>
+    <div class="hero-meta-item">
+      <div class="label">Fases Dev</div>
+      <div class="value" style="color:var(--red)">5</div>
+    </div>
+  </div>
+  <div class="version-badge">42 Luanda · Agosto 2025 · Blueprint v1.0</div>
+</header>
+
+<!-- NAV TABS -->
+<nav class="nav-tabs">
+  <button class="tab-btn active" onclick="showTab('modules')">01 · Módulos</button>
+  <button class="tab-btn" onclick="showTab('database')">02 · Base de Dados</button>
+  <button class="tab-btn" onclick="showTab('api')">03 · API 42 Intra</button>
+  <button class="tab-btn" onclick="showTab('flows')">04 · Fluxos</button>
+  <button class="tab-btn" onclick="showTab('eligibility')">05 · Elegibilidade</button>
+  <button class="tab-btn" onclick="showTab('stack')">06 · Stack</button>
+  <button class="tab-btn" onclick="showTab('timeline')">07 · Roadmap</button>
+</nav>
+
+<!-- ══════════════ TAB 1: MODULES ══════════════ -->
+<section class="section active" id="tab-modules">
+  <div class="section-title">Mapa de Módulos</div>
+  <p class="section-desc">Todos os módulos do sistema organizados por papel (cadete, staff ou ambos). Cada módulo corresponde a uma ou mais páginas no Next.js.</p>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num">10</div>
+      <div class="stat-label">Módulos Cadete</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">8</div>
+      <div class="stat-label">Módulos Staff</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">3</div>
+      <div class="stat-label">Módulos Públicos</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">21</div>
+      <div class="stat-label">Total Módulos</div>
+    </div>
+  </div>
+
+  <div class="modules-grid">
+
+    <!-- PÚBLICO -->
+    <div class="module-card" style="--accent: #666">
+      <span class="module-role role-both">PÚBLICO</span>
+      <div class="module-number">MOD · 00</div>
+      <span class="module-icon">🌐</span>
+      <div class="module-name">Landing Page</div>
+      <div class="module-desc">Página de entrada pública. Status em tempo real da consola, link para login via 42 OAuth, regulamento resumido.</div>
+      <div class="module-features">
+        <span class="feature-tag">status consola</span>
+        <span class="feature-tag">login 42</span>
+        <span class="feature-tag">regulamento</span>
+      </div>
+    </div>
+
+    <!-- CADETE -->
+    <div class="module-card" style="--accent: var(--blue-42)">
+      <span class="module-role role-cadete">CADETE</span>
+      <div class="module-number">MOD · 01</div>
+      <span class="module-icon">🏠</span>
+      <div class="module-name">Dashboard Pessoal</div>
+      <div class="module-desc">Visão geral: estado de elegibilidade em tempo real, próxima sessão agendada, estatísticas pessoais de jogo, conquistas recentes.</div>
+      <div class="module-features">
+        <span class="feature-tag">elegibilidade</span>
+        <span class="feature-tag">sessão activa</span>
+        <span class="feature-tag">stats</span>
+        <span class="feature-tag">conquistas</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--accent: var(--blue-42)">
+      <span class="module-role role-cadete">CADETE</span>
+      <div class="module-number">MOD · 02</div>
+      <span class="module-icon">📋</span>
+      <div class="module-name">Requisição de Sessão</div>
+      <div class="module-desc">Formulário de pedido de uso. Validação de elegibilidade automática via API 42. Selecção de jogo, horário desejado, companheiros de sessão.</div>
+      <div class="module-features">
+        <span class="feature-tag">formulário</span>
+        <span class="feature-tag">validação api</span>
+        <span class="feature-tag">horários</span>
+        <span class="feature-tag">30min antecipação</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--accent: var(--blue-42)">
+      <span class="module-role role-cadete">CADETE</span>
+      <div class="module-number">MOD · 03</div>
+      <span class="module-icon">⏳</span>
+      <div class="module-name">Fila em Tempo Real</div>
+      <div class="module-desc">Visualização da fila de espera actual. Posição na fila, tempo estimado de espera, notificações push quando chega a vez.</div>
+      <div class="module-features">
+        <span class="feature-tag">websocket</span>
+        <span class="feature-tag">posição fila</span>
+        <span class="feature-tag">notificações</span>
+        <span class="feature-tag">timer sessão</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--accent: var(--blue-42)">
+      <span class="module-role role-cadete">CADETE</span>
+      <div class="module-number">MOD · 04</div>
+      <span class="module-icon">🎮</span>
+      <div class="module-name">Catálogo de Jogos</div>
+      <div class="module-desc">Lista de jogos aprovados pela 42 Luanda. Categorias, classificações, popularidade. Cadetes podem sugerir novos jogos para aprovação do staff.</div>
+      <div class="module-features">
+        <span class="feature-tag">jogos aprovados</span>
+        <span class="feature-tag">sugestões</span>
+        <span class="feature-tag">popularidade</span>
+        <span class="feature-tag">categorias</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--accent: var(--blue-42)">
+      <span class="module-role role-cadete">CADETE</span>
+      <div class="module-number">MOD · 05</div>
+      <span class="module-icon">🏆</span>
+      <div class="module-name">Rankings & Leaderboard</div>
+      <div class="module-desc">Tabelas de classificação por jogo e geral. Rankings semanais, mensais e de sempre. Filtrar por coligação (coalition) da 42.</div>
+      <div class="module-features">
+        <span class="feature-tag">leaderboard</span>
+        <span class="feature-tag">por jogo</span>
+        <span class="feature-tag">coalitions</span>
+        <span class="feature-tag">períodos</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--accent: var(--blue-42)">
+      <span class="module-role role-cadete">CADETE</span>
+      <div class="module-number">MOD · 06</div>
+      <span class="module-icon">🎖️</span>
+      <div class="module-name">Conquistas & Badges</div>
+      <div class="module-desc">Sistema de gamificação. Badges por marcos (primeira sessão, 50h jogadas, torneio vencido). Conquistas académicas integradas da API 42.</div>
+      <div class="module-features">
+        <span class="feature-tag">badges</span>
+        <span class="feature-tag">marcos</span>
+        <span class="feature-tag">gamificação</span>
+        <span class="feature-tag">42 achievements</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--accent: var(--blue-42)">
+      <span class="module-role role-cadete">CADETE</span>
+      <div class="module-number">MOD · 07</div>
+      <span class="module-icon">⚔️</span>
+      <div class="module-name">Torneios</div>
+      <div class="module-desc">Organização e inscrição em torneios. Brackets automáticos, resultados, histórico de torneios anteriores. Integrado com calendário de eventos 42.</div>
+      <div class="module-features">
+        <span class="feature-tag">brackets</span>
+        <span class="feature-tag">inscrições</span>
+        <span class="feature-tag">resultados</span>
+        <span class="feature-tag">calendário</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--accent: var(--blue-42)">
+      <span class="module-role role-cadete">CADETE</span>
+      <div class="module-number">MOD · 08</div>
+      <span class="module-icon">👤</span>
+      <div class="module-name">Perfil do Cadete</div>
+      <div class="module-desc">Perfil completo integrado com dados da API 42. Stats de jogo, histórico de sessões, nível académico, coligação, conquistas, status disciplinar.</div>
+      <div class="module-features">
+        <span class="feature-tag">dados 42</span>
+        <span class="feature-tag">histórico</span>
+        <span class="feature-tag">stats</span>
+        <span class="feature-tag">coligação</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--accent: var(--blue-42)">
+      <span class="module-role role-cadete">CADETE</span>
+      <div class="module-number">MOD · 09</div>
+      <span class="module-icon">📜</span>
+      <div class="module-name">Histórico de Sessões</div>
+      <div class="module-desc">Registo completo de todas as sessões de jogo do cadete. Duração, jogos, companheiros, avaliações deixadas. Exportação disponível.</div>
+      <div class="module-features">
+        <span class="feature-tag">sessões</span>
+        <span class="feature-tag">duração</span>
+        <span class="feature-tag">jogos</span>
+        <span class="feature-tag">export</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--accent: var(--blue-42)">
+      <span class="module-role role-cadete">CADETE</span>
+      <div class="module-number">MOD · 10</div>
+      <span class="module-icon">🚨</span>
+      <div class="module-name">Denúncias</div>
+      <div class="module-desc">Submeter denúncias de incumprimento, danos ou comportamento inadequado. Opção anónima ou identificada. Acompanhamento do estado.</div>
+      <div class="module-features">
+        <span class="feature-tag">anónima</span>
+        <span class="feature-tag">categorias</span>
+        <span class="feature-tag">tracking</span>
+        <span class="feature-tag">canal oficial</span>
+      </div>
+    </div>
+
+    <!-- STAFF -->
+    <div class="module-card" style="--accent: var(--red)">
+      <span class="module-role role-staff">STAFF</span>
+      <div class="module-number">MOD · 11</div>
+      <span class="module-icon">📊</span>
+      <div class="module-name">Dashboard Operacional</div>
+      <div class="module-desc">Centro de controlo em tempo real. Sessão activa, fila actual, alertas pendentes, métricas do dia, acções rápidas.</div>
+      <div class="module-features">
+        <span class="feature-tag">real-time</span>
+        <span class="feature-tag">alertas</span>
+        <span class="feature-tag">métricas</span>
+        <span class="feature-tag">acções rápidas</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--accent: var(--red)">
+      <span class="module-role role-staff">STAFF</span>
+      <div class="module-number">MOD · 12</div>
+      <span class="module-icon">📅</span>
+      <div class="module-name">Gestão de Requisições</div>
+      <div class="module-desc">Aprovar, rejeitar ou modificar pedidos. Gerir fila de espera, forçar fim de sessão, extensão de tempo. Registo de todas as decisões.</div>
+      <div class="module-features">
+        <span class="feature-tag">aprovação</span>
+        <span class="feature-tag">rejeição</span>
+        <span class="feature-tag">gestão fila</span>
+        <span class="feature-tag">audit log</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--accent: var(--red)">
+      <span class="module-role role-staff">STAFF</span>
+      <div class="module-number">MOD · 13</div>
+      <span class="module-icon">👥</span>
+      <div class="module-name">Gestão de Cadetes</div>
+      <div class="module-desc">Visão de todos os cadetes: elegibilidade actual, histórico disciplinar, sessões, avisos activos. Bloquear/desbloquear acesso manualmente.</div>
+      <div class="module-features">
+        <span class="feature-tag">elegibilidade</span>
+        <span class="feature-tag">bloqueios</span>
+        <span class="feature-tag">histórico</span>
+        <span class="feature-tag">avisos</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--accent: var(--red)">
+      <span class="module-role role-staff">STAFF</span>
+      <div class="module-number">MOD · 14</div>
+      <span class="module-icon">🎮</span>
+      <div class="module-name">Gestão de Jogos</div>
+      <div class="module-desc">Aprovar/reprovar jogos submetidos. Gerir catálogo, definir categorias, adicionar informações. Responder a sugestões dos cadetes.</div>
+      <div class="module-features">
+        <span class="feature-tag">catálogo</span>
+        <span class="feature-tag">aprovações</span>
+        <span class="feature-tag">categorias</span>
+        <span class="feature-tag">sugestões</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--accent: var(--red)">
+      <span class="module-role role-staff">STAFF</span>
+      <div class="module-number">MOD · 15</div>
+      <span class="module-icon">⚠️</span>
+      <div class="module-name">Incidentes & Danos</div>
+      <div class="module-desc">Registar e gerir incidentes: danos ao equipamento, mau uso, problemas técnicos. Upload de fotos, responsáveis, estado de resolução.</div>
+      <div class="module-features">
+        <span class="feature-tag">registo</span>
+        <span class="feature-tag">fotos</span>
+        <span class="feature-tag">responsáveis</span>
+        <span class="feature-tag">resolução</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--accent: var(--red)">
+      <span class="module-role role-staff">STAFF</span>
+      <div class="module-number">MOD · 16</div>
+      <span class="module-icon">⚖️</span>
+      <div class="module-name">Painel Disciplinar</div>
+      <div class="module-desc">Gerir processos disciplinares: admoestações, suspensões, indemnizações. Histórico completo por cadete. Proposta para Conselho Pedagógico.</div>
+      <div class="module-features">
+        <span class="feature-tag">sanções</span>
+        <span class="feature-tag">histórico</span>
+        <span class="feature-tag">conselho ped.</span>
+        <span class="feature-tag">indemnizações</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--accent: var(--red)">
+      <span class="module-role role-staff">STAFF</span>
+      <div class="module-number">MOD · 17</div>
+      <span class="module-icon">📈</span>
+      <div class="module-name">Analytics & Relatórios</div>
+      <div class="module-desc">Dashboards analíticos: jogos mais populares, horários de pico, cadetes mais activos, taxa de incumprimento. Exportação em PDF.</div>
+      <div class="module-features">
+        <span class="feature-tag">gráficos</span>
+        <span class="feature-tag">horários pico</span>
+        <span class="feature-tag">export pdf</span>
+        <span class="feature-tag">filtros</span>
+      </div>
+    </div>
+
+    <div class="module-card" style="--accent: var(--red)">
+      <span class="module-role role-staff">STAFF</span>
+      <div class="module-number">MOD · 18</div>
+      <span class="module-icon">⚙️</span>
+      <div class="module-name">Configurações do Sistema</div>
+      <div class="module-desc">Definir horários de funcionamento, tempo máximo por sessão, critérios de elegibilidade, modo de fila, bloqueio por eventos/exames.</div>
+      <div class="module-features">
+        <span class="feature-tag">horários</span>
+        <span class="feature-tag">limites</span>
+        <span class="feature-tag">critérios</span>
+        <span class="feature-tag">bloqueios auto</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════ TAB 2: DATABASE ══════════════ -->
+<section class="section" id="tab-database">
+  <div class="section-title">Esquema da Base de Dados</div>
+  <p class="section-desc">PostgreSQL via Supabase com Prisma ORM. 12 tabelas principais com relações definidas. Dados da API 42 são sincronizados e cacheados localmente.</p>
+
+  <div class="schema-grid">
+
+    <div class="table-card">
+      <div class="table-header"><span class="table-icon">👤</span> users</div>
+      <div class="table-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="field-pk">PK</span><span class="field-type">uuid</span></div>
+        <div class="field-row"><span class="field-name">intra_id</span><span class="field-idx">IDX</span><span class="field-type">int</span></div>
+        <div class="field-row"><span class="field-name">login</span><span class="field-type">varchar</span></div>
+        <div class="field-row"><span class="field-name">display_name</span><span class="field-type">varchar</span></div>
+        <div class="field-row"><span class="field-name">email</span><span class="field-type">varchar</span></div>
+        <div class="field-row"><span class="field-name">avatar_url</span><span class="field-type">text</span></div>
+        <div class="field-row"><span class="field-name">role</span><span class="field-type">enum(cadete,staff,admin)</span></div>
+        <div class="field-row"><span class="field-name">coalition_id</span><span class="field-fk">FK</span><span class="field-type">int</span></div>
+        <div class="field-row"><span class="field-name">is_eligible</span><span class="field-type">boolean</span></div>
+        <div class="field-row"><span class="field-name">is_blocked</span><span class="field-type">boolean</span></div>
+        <div class="field-row"><span class="field-name">intra_level</span><span class="field-type">float</span></div>
+        <div class="field-row"><span class="field-name">last_sync_at</span><span class="field-type">timestamp</span></div>
+        <div class="field-row"><span class="field-name">created_at</span><span class="field-type">timestamp</span></div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header"><span class="table-icon">📋</span> sessions</div>
+      <div class="table-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="field-pk">PK</span><span class="field-type">uuid</span></div>
+        <div class="field-row"><span class="field-name">user_id</span><span class="field-fk">FK</span><span class="field-type">uuid → users</span></div>
+        <div class="field-row"><span class="field-name">game_id</span><span class="field-fk">FK</span><span class="field-type">uuid → games</span></div>
+        <div class="field-row"><span class="field-name">status</span><span class="field-type">enum(pending,active,done,cancelled)</span></div>
+        <div class="field-row"><span class="field-name">requested_at</span><span class="field-type">timestamp</span></div>
+        <div class="field-row"><span class="field-name">started_at</span><span class="field-type">timestamp</span></div>
+        <div class="field-row"><span class="field-name">ended_at</span><span class="field-type">timestamp</span></div>
+        <div class="field-row"><span class="field-name">duration_min</span><span class="field-type">int</span></div>
+        <div class="field-row"><span class="field-name">extended</span><span class="field-type">boolean</span></div>
+        <div class="field-row"><span class="field-name">ended_by</span><span class="field-type">enum(timer,staff,cadete)</span></div>
+        <div class="field-row"><span class="field-name">notes</span><span class="field-type">text</span></div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header"><span class="table-icon">🎮</span> games</div>
+      <div class="table-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="field-pk">PK</span><span class="field-type">uuid</span></div>
+        <div class="field-row"><span class="field-name">title</span><span class="field-type">varchar</span></div>
+        <div class="field-row"><span class="field-name">cover_url</span><span class="field-type">text</span></div>
+        <div class="field-row"><span class="field-name">category</span><span class="field-type">varchar</span></div>
+        <div class="field-row"><span class="field-name">max_players</span><span class="field-type">int</span></div>
+        <div class="field-row"><span class="field-name">is_approved</span><span class="field-type">boolean</span></div>
+        <div class="field-row"><span class="field-name">approved_by</span><span class="field-fk">FK</span><span class="field-type">uuid → users</span></div>
+        <div class="field-row"><span class="field-name">format</span><span class="field-type">enum(physical,digital)</span></div>
+        <div class="field-row"><span class="field-name">pegi_rating</span><span class="field-type">int</span></div>
+        <div class="field-row"><span class="field-name">total_sessions</span><span class="field-type">int</span></div>
+        <div class="field-row"><span class="field-name">suggested_by</span><span class="field-fk">FK</span><span class="field-type">uuid → users</span></div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header"><span class="table-icon">⚖️</span> disciplinary_records</div>
+      <div class="table-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="field-pk">PK</span><span class="field-type">uuid</span></div>
+        <div class="field-row"><span class="field-name">user_id</span><span class="field-fk">FK</span><span class="field-type">uuid → users</span></div>
+        <div class="field-row"><span class="field-name">type</span><span class="field-type">enum(warning,suspension,fine,expulsion)</span></div>
+        <div class="field-row"><span class="field-name">reason</span><span class="field-type">text</span></div>
+        <div class="field-row"><span class="field-name">article_violated</span><span class="field-type">varchar</span></div>
+        <div class="field-row"><span class="field-name">issued_by</span><span class="field-fk">FK</span><span class="field-type">uuid → users</span></div>
+        <div class="field-row"><span class="field-name">valid_until</span><span class="field-type">timestamp</span></div>
+        <div class="field-row"><span class="field-name">is_active</span><span class="field-type">boolean</span></div>
+        <div class="field-row"><span class="field-name">council_approved</span><span class="field-type">boolean</span></div>
+        <div class="field-row"><span class="field-name">created_at</span><span class="field-type">timestamp</span></div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header"><span class="table-icon">🚨</span> reports</div>
+      <div class="table-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="field-pk">PK</span><span class="field-type">uuid</span></div>
+        <div class="field-row"><span class="field-name">reporter_id</span><span class="field-fk">FK</span><span class="field-type">uuid → users (null=anon)</span></div>
+        <div class="field-row"><span class="field-name">reported_user_id</span><span class="field-fk">FK</span><span class="field-type">uuid → users</span></div>
+        <div class="field-row"><span class="field-name">category</span><span class="field-type">enum(conduct,damage,rules,other)</span></div>
+        <div class="field-row"><span class="field-name">description</span><span class="field-type">text</span></div>
+        <div class="field-row"><span class="field-name">evidence_urls</span><span class="field-type">text[]</span></div>
+        <div class="field-row"><span class="field-name">status</span><span class="field-type">enum(open,reviewing,resolved,dismissed)</span></div>
+        <div class="field-row"><span class="field-name">resolved_by</span><span class="field-fk">FK</span><span class="field-type">uuid → users</span></div>
+        <div class="field-row"><span class="field-name">resolution_notes</span><span class="field-type">text</span></div>
+        <div class="field-row"><span class="field-name">created_at</span><span class="field-type">timestamp</span></div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header"><span class="table-icon">🏆</span> game_results</div>
+      <div class="table-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="field-pk">PK</span><span class="field-type">uuid</span></div>
+        <div class="field-row"><span class="field-name">session_id</span><span class="field-fk">FK</span><span class="field-type">uuid → sessions</span></div>
+        <div class="field-row"><span class="field-name">game_id</span><span class="field-fk">FK</span><span class="field-type">uuid → games</span></div>
+        <div class="field-row"><span class="field-name">winner_id</span><span class="field-fk">FK</span><span class="field-type">uuid → users</span></div>
+        <div class="field-row"><span class="field-name">participants</span><span class="field-type">uuid[]</span></div>
+        <div class="field-row"><span class="field-name">score_data</span><span class="field-type">jsonb</span></div>
+        <div class="field-row"><span class="field-name">match_type</span><span class="field-type">enum(casual,tournament,ranked)</span></div>
+        <div class="field-row"><span class="field-name">verified</span><span class="field-type">boolean</span></div>
+        <div class="field-row"><span class="field-name">created_at</span><span class="field-type">timestamp</span></div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header"><span class="table-icon">⚔️</span> tournaments</div>
+      <div class="table-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="field-pk">PK</span><span class="field-type">uuid</span></div>
+        <div class="field-row"><span class="field-name">name</span><span class="field-type">varchar</span></div>
+        <div class="field-row"><span class="field-name">game_id</span><span class="field-fk">FK</span><span class="field-type">uuid → games</span></div>
+        <div class="field-row"><span class="field-name">created_by</span><span class="field-fk">FK</span><span class="field-type">uuid → users</span></div>
+        <div class="field-row"><span class="field-name">status</span><span class="field-type">enum(draft,open,running,done)</span></div>
+        <div class="field-row"><span class="field-name">max_participants</span><span class="field-type">int</span></div>
+        <div class="field-row"><span class="field-name">bracket_data</span><span class="field-type">jsonb</span></div>
+        <div class="field-row"><span class="field-name">winner_id</span><span class="field-fk">FK</span><span class="field-type">uuid → users</span></div>
+        <div class="field-row"><span class="field-name">starts_at</span><span class="field-type">timestamp</span></div>
+        <div class="field-row"><span class="field-name">ends_at</span><span class="field-type">timestamp</span></div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header"><span class="table-icon">🎖️</span> achievements</div>
+      <div class="table-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="field-pk">PK</span><span class="field-type">uuid</span></div>
+        <div class="field-row"><span class="field-name">slug</span><span class="field-idx">IDX</span><span class="field-type">varchar</span></div>
+        <div class="field-row"><span class="field-name">name</span><span class="field-type">varchar</span></div>
+        <div class="field-row"><span class="field-name">description</span><span class="field-type">text</span></div>
+        <div class="field-row"><span class="field-name">icon</span><span class="field-type">varchar</span></div>
+        <div class="field-row"><span class="field-name">category</span><span class="field-type">enum(gaming,social,academic,special)</span></div>
+        <div class="field-row"><span class="field-name">condition_type</span><span class="field-type">varchar</span></div>
+        <div class="field-row"><span class="field-name">condition_value</span><span class="field-type">int</span></div>
+        <div class="field-row"><span class="field-name">rarity</span><span class="field-type">enum(common,rare,epic,legendary)</span></div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header"><span class="table-icon">⚠️</span> incidents</div>
+      <div class="table-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="field-pk">PK</span><span class="field-type">uuid</span></div>
+        <div class="field-row"><span class="field-name">session_id</span><span class="field-fk">FK</span><span class="field-type">uuid → sessions</span></div>
+        <div class="field-row"><span class="field-name">responsible_id</span><span class="field-fk">FK</span><span class="field-type">uuid → users</span></div>
+        <div class="field-row"><span class="field-name">reported_by</span><span class="field-fk">FK</span><span class="field-type">uuid → users</span></div>
+        <div class="field-row"><span class="field-name">type</span><span class="field-type">enum(damage,theft,misuse,technical)</span></div>
+        <div class="field-row"><span class="field-name">description</span><span class="field-type">text</span></div>
+        <div class="field-row"><span class="field-name">photo_urls</span><span class="field-type">text[]</span></div>
+        <div class="field-row"><span class="field-name">repair_cost</span><span class="field-type">decimal</span></div>
+        <div class="field-row"><span class="field-name">status</span><span class="field-type">enum(open,in_progress,resolved)</span></div>
+        <div class="field-row"><span class="field-name">created_at</span><span class="field-type">timestamp</span></div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header"><span class="table-icon">⏰</span> system_config</div>
+      <div class="table-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="field-pk">PK</span><span class="field-type">uuid</span></div>
+        <div class="field-row"><span class="field-name">key</span><span class="field-idx">IDX</span><span class="field-type">varchar</span></div>
+        <div class="field-row"><span class="field-name">value</span><span class="field-type">jsonb</span></div>
+        <div class="field-row"><span class="field-name">description</span><span class="field-type">text</span></div>
+        <div class="field-row"><span class="field-name">updated_by</span><span class="field-fk">FK</span><span class="field-type">uuid → users</span></div>
+        <div class="field-row"><span class="field-name">updated_at</span><span class="field-type">timestamp</span></div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header"><span class="table-icon">📝</span> audit_logs</div>
+      <div class="table-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="field-pk">PK</span><span class="field-type">uuid</span></div>
+        <div class="field-row"><span class="field-name">actor_id</span><span class="field-fk">FK</span><span class="field-type">uuid → users</span></div>
+        <div class="field-row"><span class="field-name">action</span><span class="field-type">varchar</span></div>
+        <div class="field-row"><span class="field-name">entity_type</span><span class="field-type">varchar</span></div>
+        <div class="field-row"><span class="field-name">entity_id</span><span class="field-type">uuid</span></div>
+        <div class="field-row"><span class="field-name">before_data</span><span class="field-type">jsonb</span></div>
+        <div class="field-row"><span class="field-name">after_data</span><span class="field-type">jsonb</span></div>
+        <div class="field-row"><span class="field-name">ip_address</span><span class="field-type">inet</span></div>
+        <div class="field-row"><span class="field-name">created_at</span><span class="field-type">timestamp</span></div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header"><span class="table-icon">🔔</span> notifications</div>
+      <div class="table-fields">
+        <div class="field-row"><span class="field-name">id</span><span class="field-pk">PK</span><span class="field-type">uuid</span></div>
+        <div class="field-row"><span class="field-name">user_id</span><span class="field-fk">FK</span><span class="field-type">uuid → users</span></div>
+        <div class="field-row"><span class="field-name">type</span><span class="field-type">enum(queue,session,discipline,...)</span></div>
+        <div class="field-row"><span class="field-name">title</span><span class="field-type">varchar</span></div>
+        <div class="field-row"><span class="field-name">body</span><span class="field-type">text</span></div>
+        <div class="field-row"><span class="field-name">action_url</span><span class="field-type">varchar</span></div>
+        <div class="field-row"><span class="field-name">is_read</span><span class="field-type">boolean</span></div>
+        <div class="field-row"><span class="field-name">created_at</span><span class="field-type">timestamp</span></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════ TAB 3: API ══════════════ -->
+<section class="section" id="tab-api">
+  <div class="section-title">API 42 Intra — Integração</div>
+  <p class="section-desc">Todos os endpoints da API 42 Intra que o sistema vai consumir. Base URL: <code style="font-family:'Space Mono',monospace;font-size:12px;color:var(--blue-42)">https://api.intra.42.fr/v2</code> — Autenticação via OAuth2.</p>
+
+  <div class="api-grid">
+    <div class="api-endpoint">
+      <span class="api-method method-get">GET</span>
+      <div class="api-path">/oauth/token</div>
+      <div class="api-desc">Troca do código de autorização por access_token. Fluxo de login OAuth2 via NextAuth.js.</div>
+      <div class="api-returns">
+        <span class="api-return-tag">access_token</span>
+        <span class="api-return-tag">token_type</span>
+        <span class="api-return-tag">expires_in</span>
+      </div>
+    </div>
+    <div class="api-endpoint">
+      <span class="api-method method-get">GET</span>
+      <div class="api-path">/me</div>
+      <div class="api-desc">Dados completos do utilizador autenticado. Chamado no login e para sincronizar o perfil.</div>
+      <div class="api-returns">
+        <span class="api-return-tag">id</span>
+        <span class="api-return-tag">login</span>
+        <span class="api-return-tag">email</span>
+        <span class="api-return-tag">image</span>
+        <span class="api-return-tag">level</span>
+        <span class="api-return-tag">campus</span>
+      </div>
+    </div>
+    <div class="api-endpoint">
+      <span class="api-method method-get">GET</span>
+      <div class="api-path">/me/cursus_users</div>
+      <div class="api-desc">Progresso no cursus 42. Inclui nível, órbita actual no Holy Graph, skills adquiridas.</div>
+      <div class="api-returns">
+        <span class="api-return-tag">level</span>
+        <span class="api-return-tag">grade</span>
+        <span class="api-return-tag">cursus_id</span>
+        <span class="api-return-tag">skills</span>
+      </div>
+    </div>
+    <div class="api-endpoint">
+      <span class="api-method method-get">GET</span>
+      <div class="api-path">/me/projects_users</div>
+      <div class="api-desc">Todos os projectos do cadete. Usado para verificar atrasos e situação académica (Art. 3f).</div>
+      <div class="api-returns">
+        <span class="api-return-tag">project</span>
+        <span class="api-return-tag">status</span>
+        <span class="api-return-tag">final_mark</span>
+        <span class="api-return-tag">validated</span>
+      </div>
+    </div>
+    <div class="api-endpoint">
+      <span class="api-method method-get">GET</span>
+      <div class="api-path">/me/scale_teams</div>
+      <div class="api-desc">Histórico de avaliações. Verificar média de avaliações acima de 3 por mês (Art. 3d).</div>
+      <div class="api-returns">
+        <span class="api-return-tag">final_mark</span>
+        <span class="api-return-tag">comment</span>
+        <span class="api-return-tag">created_at</span>
+        <span class="api-return-tag">feedback</span>
+      </div>
+    </div>
+    <div class="api-endpoint">
+      <span class="api-method method-get">GET</span>
+      <div class="api-path">/me/coalitions</div>
+      <div class="api-desc">Coligação (equipa/casa) do cadete na 42 Luanda. Usado nos rankings filtrados por coligação.</div>
+      <div class="api-returns">
+        <span class="api-return-tag">id</span>
+        <span class="api-return-tag">name</span>
+        <span class="api-return-tag">color</span>
+        <span class="api-return-tag">image_url</span>
+        <span class="api-return-tag">score</span>
+      </div>
+    </div>
+    <div class="api-endpoint">
+      <span class="api-method method-get">GET</span>
+      <div class="api-path">/me/achievements</div>
+      <div class="api-desc">Conquistas académicas da 42 Intra. Integradas no perfil do cadete juntamente com as conquistas do PS42.</div>
+      <div class="api-returns">
+        <span class="api-return-tag">name</span>
+        <span class="api-return-tag">description</span>
+        <span class="api-return-tag">image</span>
+        <span class="api-return-tag">nbr_of_success</span>
+      </div>
+    </div>
+    <div class="api-endpoint">
+      <span class="api-method method-get">GET</span>
+      <div class="api-path">/campus/:id/users</div>
+      <div class="api-desc">Lista de todos os cadetes do campus 42 Luanda. Usado pelo staff para sincronizar a base de cadetes.</div>
+      <div class="api-returns">
+        <span class="api-return-tag">id</span>
+        <span class="api-return-tag">login</span>
+        <span class="api-return-tag">level</span>
+        <span class="api-return-tag">pool_year</span>
+      </div>
+    </div>
+    <div class="api-endpoint">
+      <span class="api-method method-get">GET</span>
+      <div class="api-path">/campus/:id/exams</div>
+      <div class="api-desc">Exames agendados no campus. O sistema bloqueia automaticamente a PS durante exames (Art. 4e).</div>
+      <div class="api-returns">
+        <span class="api-return-tag">name</span>
+        <span class="api-return-tag">begin_at</span>
+        <span class="api-return-tag">end_at</span>
+        <span class="api-return-tag">location</span>
+      </div>
+    </div>
+    <div class="api-endpoint">
+      <span class="api-method method-get">GET</span>
+      <div class="api-path">/campus/:id/events</div>
+      <div class="api-desc">Eventos obrigatórios do campus. Bloqueia PS durante eventos de participação obrigatória (Art. 4e).</div>
+      <div class="api-returns">
+        <span class="api-return-tag">name</span>
+        <span class="api-return-tag">kind</span>
+        <span class="api-return-tag">begin_at</span>
+        <span class="api-return-tag">max_people</span>
+      </div>
+    </div>
+    <div class="api-endpoint">
+      <span class="api-method method-get">GET</span>
+      <div class="api-path">/users/:login/locations</div>
+      <div class="api-desc">Logs de localização do cadete (horas no campus). Verifica assiduidade e presença física.</div>
+      <div class="api-returns">
+        <span class="api-return-tag">host</span>
+        <span class="api-return-tag">begin_at</span>
+        <span class="api-return-tag">end_at</span>
+      </div>
+    </div>
+    <div class="api-endpoint">
+      <span class="api-method method-get">GET</span>
+      <div class="api-path">/users/:id/patroned</div>
+      <div class="api-desc">Relações de mentoria. Identifica cadetes que são mentores — contexto extra para o perfil e rankings.</div>
+      <div class="api-returns">
+        <span class="api-return-tag">godfather</span>
+        <span class="api-return-tag">godson</span>
+        <span class="api-return-tag">ongoing</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);padding:28px;margin-top:24px;">
+    <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--text-muted);letter-spacing:2px;margin-bottom:16px;">NOTAS DE INTEGRAÇÃO</div>
+    <div style="display:grid;gap:12px;font-size:13px;color:var(--text-secondary);line-height:1.7;">
+      <div>→ <strong style="color:var(--white)">Rate Limiting:</strong> A API 42 Intra tem limites de rate. Vamos fazer cache Redis de 15 minutos para dados de elegibilidade e 1 hora para dados de perfil estático.</div>
+      <div>→ <strong style="color:var(--white)">Sincronização:</strong> Cron job a cada hora sincroniza dados dos cadetes. Sincronização imediata no login.</div>
+      <div>→ <strong style="color:var(--white)">Campus ID:</strong> 42 Luanda tem um campus ID específico que precisamos confirmar com o staff da escola.</div>
+      <div>→ <strong style="color:var(--white)">Ritmo (Art. 3c):</strong> O "ritmo ≤ 22" refere-se ao rank na fila de espera / posição no cursus — precisamos confirmar o cálculo exacto com o staff.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ TAB 4: FLOWS ══════════════ -->
+<section class="section" id="tab-flows">
+  <div class="section-title">Fluxos de Utilizador</div>
+  <p class="section-desc">Os principais fluxos de interacção no sistema, desde o login até às acções mais complexas.</p>
+
+  <div class="flow-diagram">
+    <div class="flow-title-bar">🔐 Fluxo de Login e Verificação de Elegibilidade</div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-box primary"><div class="step-num">01</div><div class="step-label">Cadete acede ao sistema</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box primary"><div class="step-num">02</div><div class="step-label">Login via 42 OAuth</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box"><div class="step-num">03</div><div class="step-label">Fetch dados API 42</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box"><div class="step-num">04</div><div class="step-label">Verificar critérios Art. 3</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box success"><div class="step-num">05a</div><div class="step-label">Elegível → Dashboard</div></div>
+      </div>
+    </div>
+    <div style="margin-top:12px;">
+      <div class="flow-steps">
+        <div style="width:120px"></div>
+        <div class="step-arrow"></div>
+        <div style="width:120px"></div>
+        <div class="step-arrow"></div>
+        <div class="step-box danger"><div class="step-num">05b</div><div class="step-label">Não elegível → Motivo + Dashboard limitado</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-diagram">
+    <div class="flow-title-bar">📋 Fluxo de Requisição de Sessão</div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-box primary"><div class="step-num">01</div><div class="step-label">Cadete acede a /requisição</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box"><div class="step-num">02</div><div class="step-label">Sistema verifica elegibilidade + horário + exames</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box"><div class="step-num">03</div><div class="step-label">Preenche formulário (jogo, horário)</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box warning"><div class="step-num">04</div><div class="step-label">Entra na fila (tempo real)</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box"><div class="step-num">05</div><div class="step-label">Levanta consola na recepção com ID</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box success"><div class="step-num">06</div><div class="step-label">Sessão activa (timer 1h)</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-diagram">
+    <div class="flow-title-bar">🚨 Fluxo de Denúncia</div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-box primary"><div class="step-num">01</div><div class="step-label">Cadete/Staff detecta infracção</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box"><div class="step-num">02</div><div class="step-label">Acede a /denúncias</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box"><div class="step-num">03</div><div class="step-label">Preenche (categoria, descrição, provas)</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box warning"><div class="step-num">04</div><div class="step-label">Staff recebe alerta em tempo real</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box"><div class="step-num">05</div><div class="step-label">Staff analisa + decide acção</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box success"><div class="step-num">06</div><div class="step-label">Resolução documentada</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-diagram">
+    <div class="flow-title-bar">⚖️ Fluxo Disciplinar</div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-box danger"><div class="step-num">01</div><div class="step-label">Infracção detectada / denúncia validada</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box"><div class="step-num">02</div><div class="step-label">Staff regista processo disciplinar</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box warning"><div class="step-num">03</div><div class="step-label">Proposta ao Conselho Pedagógico</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box"><div class="step-num">04</div><div class="step-label">Conselho aprova medida</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box danger"><div class="step-num">05</div><div class="step-label">Sanção aplicada (suspensão/admoestação)</div></div>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="flow-step">
+        <div class="step-box"><div class="step-num">06</div><div class="step-label">Cadete notificado + bloqueio automático</div></div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ══════════════ TAB 5: ELIGIBILITY ══════════════ -->
+<section class="section" id="tab-eligibility">
+  <div class="section-title">Motor de Elegibilidade</div>
+  <p class="section-desc">O sistema verifica automaticamente 8 critérios definidos no Art. 3.º do regulamento. Cada critério é verificado via API 42 Intra ou via base de dados local.</p>
+
+  <div class="rules-grid">
+    <div class="rule-card required">
+      <div class="rule-type">CRITÉRIO A · OBRIGATÓRIO</div>
+      <div class="rule-title">Ser Cadete da 42 Luanda</div>
+      <div class="rule-desc">O utilizador deve estar inscrito no campus 42 Luanda e ter conta activa na Intra.</div>
+      <div class="rule-api">API: /me → campus[].id === LUANDA_CAMPUS_ID</div>
+    </div>
+    <div class="rule-card required">
+      <div class="rule-type">CRITÉRIO B · OBRIGATÓRIO</div>
+      <div class="rule-title">2ª Órbita do Holy Graph</div>
+      <div class="rule-desc">Ter concluído pelo menos a 2ª órbita do Holy Graph no cursus principal da 42.</div>
+      <div class="rule-api">API: /me/cursus_users → projects validados ≥ 2ª órbita</div>
+    </div>
+    <div class="rule-card metric">
+      <div class="rule-type">CRITÉRIO C · MÉTRICA</div>
+      <div class="rule-title">Ritmo ≤ 22</div>
+      <div class="rule-desc">Ter um ritmo de progresso no cursus igual ou inferior ao nível 22. (Confirmar métrica exacta com staff.)</div>
+      <div class="rule-api">API: /me/cursus_users → level ≤ 22 OR custom metric</div>
+    </div>
+    <div class="rule-card metric">
+      <div class="rule-type">CRITÉRIO D · MÉTRICA MENSAL</div>
+      <div class="rule-title">Média de Avaliações &gt; 3/mês</div>
+      <div class="rule-desc">Ter uma média de avaliações (notas dadas a colegas) acima de 3 por mês nos últimos 30 dias.</div>
+      <div class="rule-api">API: /me/scale_teams → avg(final_mark) &gt; 3 last 30d</div>
+    </div>
+    <div class="rule-card required">
+      <div class="rule-type">CRITÉRIO E · OBRIGATÓRIO</div>
+      <div class="rule-title">Sem Histórico Disciplinar Grave</div>
+      <div class="rule-desc">Não ter nenhum registo disciplinar grave activo ou histórico de infracções graves.</div>
+      <div class="rule-api">DB: disciplinary_records WHERE is_active=true AND type IN (suspension, expulsion)</div>
+    </div>
+    <div class="rule-card conditional">
+      <div class="rule-type">CRITÉRIO F · CONDICIONAL</div>
+      <div class="rule-title">Situação Académica Regular</div>
+      <div class="rule-desc">Sem atrasos graves nos projectos. Definido pela equipa pedagógica caso a caso.</div>
+      <div class="rule-api">API: /me/projects_users → sem projectos em falha crítica</div>
+    </div>
+    <div class="rule-card conditional">
+      <div class="rule-type">CRITÉRIO G · COMPORTAMENTAL</div>
+      <div class="rule-title">Comportamento Adequado</div>
+      <div class="rule-desc">Demonstrar respeito pelas regras. Avaliado com base no histórico de denúncias e incidentes.</div>
+      <div class="rule-api">DB: reports WHERE reported_user_id AND status = resolved (guilty)</div>
+    </div>
+    <div class="rule-card required">
+      <div class="rule-type">CRITÉRIO H · OBRIGATÓRIO</div>
+      <div class="rule-title">Sem Sanção Disciplinar em Vigor</div>
+      <div class="rule-desc">Não ter nenhuma sanção disciplinar activa (suspensão, admoestação com bloqueio).</div>
+      <div class="rule-api">DB: disciplinary_records WHERE is_active=true AND valid_until &gt; NOW()</div>
+    </div>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid rgba(0,186,188,0.2);padding:28px;margin-top:8px;">
+    <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--blue-42);letter-spacing:2px;margin-bottom:16px;">BLOQUEIOS AUTOMÁTICOS POR HORÁRIO E EVENTOS</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:13px;line-height:1.7;">
+      <div style="background:var(--surface3);padding:16px;border:1px solid var(--border);">
+        <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--text-muted);margin-bottom:8px;">HORÁRIO DE FUNCIONAMENTO</div>
+        <div>Segunda a Sexta: <strong style="color:var(--white)">08h00 às 17h00</strong></div>
+        <div style="color:var(--text-muted);font-size:12px;margin-top:4px;">Fora deste horário → consola bloqueada automaticamente</div>
+      </div>
+      <div style="background:var(--surface3);padding:16px;border:1px solid var(--border);">
+        <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--text-muted);margin-bottom:8px;">BLOQUEIO POR EVENTOS (API 42)</div>
+        <div>Exames → <strong style="color:var(--red)">Bloqueio total</strong></div>
+        <div>Eventos obrigatórios → <strong style="color:var(--red)">Bloqueio total</strong></div>
+        <div style="color:var(--text-muted);font-size:12px;margin-top:4px;">Sincronizado com calendário da API 42 Intra</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ TAB 6: STACK ══════════════ -->
+<section class="section" id="tab-stack">
+  <div class="section-title">Stack Tecnológica</div>
+  <p class="section-desc">Cada tecnologia foi escolhida por uma razão específica. Nenhuma escolha arbitrária.</p>
+
+  <div class="stack-grid">
+    <div class="stack-item">
+      <div class="stack-category">Framework</div>
+      <div class="stack-name" style="color:var(--white)">Next.js 14</div>
+      <div class="stack-reason">App Router, Server Components, API Routes. Tudo num só projecto.</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-category">Linguagem</div>
+      <div class="stack-name" style="color:var(--blue-42)">TypeScript</div>
+      <div class="stack-reason">Tipagem forte. Erros detectados em desenvolvimento, não produção.</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-category">Styling</div>
+      <div class="stack-name" style="color:var(--gold)">Tailwind CSS</div>
+      <div class="stack-reason">Utility-first. Rápido, consistente, sem CSS global bagunçado.</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-category">Componentes</div>
+      <div class="stack-name" style="color:var(--white)">shadcn/ui</div>
+      <div class="stack-reason">Componentes acessíveis, personalizáveis, sem dependência de biblioteca.</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-category">Autenticação</div>
+      <div class="stack-name" style="color:var(--green)">NextAuth.js</div>
+      <div class="stack-reason">Provider OAuth2 nativo para 42 Intra. Sessões seguras, zero config.</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-category">Base de Dados</div>
+      <div class="stack-name" style="color:var(--blue-42)">PostgreSQL</div>
+      <div class="stack-reason">Robusto, relacional, suporta jsonb para dados flexíveis.</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-category">Hosting DB</div>
+      <div class="stack-name" style="color:var(--green)">Supabase</div>
+      <div class="stack-reason">PostgreSQL gerido. Free tier generoso. Real-time subscriptions nativas.</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-category">ORM</div>
+      <div class="stack-name" style="color:var(--white)">Prisma</div>
+      <div class="stack-reason">Schema como código. Migrações automáticas. Type-safe queries.</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-category">Real-time</div>
+      <div class="stack-name" style="color:var(--red)">Pusher</div>
+      <div class="stack-reason">WebSockets geridos. Fila em tempo real, notificações push instantâneas.</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-category">Cache</div>
+      <div class="stack-name" style="color:var(--gold)">Upstash Redis</div>
+      <div class="stack-reason">Cache de elegibilidade, rate limiting, sessões temporárias. Serverless.</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-category">Email</div>
+      <div class="stack-name" style="color:var(--white)">Resend</div>
+      <div class="stack-reason">Email transaccional moderno. API simples, templates React.</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-category">Upload</div>
+      <div class="stack-name" style="color:var(--blue-42)">Cloudinary</div>
+      <div class="stack-reason">Upload de fotos de incidentes. Transformações automáticas.</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-category">Gráficos</div>
+      <div class="stack-name" style="color:var(--green)">Recharts</div>
+      <div class="stack-reason">Gráficos compostos e responsivos para o painel analytics.</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-category">Deploy</div>
+      <div class="stack-name" style="color:var(--white)">Vercel</div>
+      <div class="stack-reason">Integração nativa Next.js. Preview deploys automáticos. Zero config.</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-category">Testes</div>
+      <div class="stack-name" style="color:var(--gold)">Vitest + Playwright</div>
+      <div class="stack-reason">Unit tests (Vitest) + E2E tests (Playwright). Cobertura completa.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ TAB 7: TIMELINE ══════════════ -->
+<section class="section" id="tab-timeline">
+  <div class="section-title">Roadmap de Desenvolvimento</div>
+  <p class="section-desc">5 fases ordenadas. Cada fase entrega valor funcional completo antes de avançar para a próxima.</p>
+
+  <div class="timeline">
+
+    <div class="timeline-phase">
+      <div class="phase-header">
+        <span class="phase-num">FASE 01</span>
+        <span class="phase-name">Fundação</span>
+      </div>
+      <div class="phase-tasks">
+        <div class="task-item"><div class="task-check">→</div>Setup Next.js 14 + TypeScript + Tailwind</div>
+        <div class="task-item"><div class="task-check">→</div>Estrutura de pastas (App Router)</div>
+        <div class="task-item"><div class="task-check">→</div>Configurar NextAuth.js + 42 OAuth</div>
+        <div class="task-item"><div class="task-check">→</div>Login funcional com conta 42 Intra</div>
+        <div class="task-item"><div class="task-check">→</div>Prisma schema completo (12 tabelas)</div>
+        <div class="task-item"><div class="task-check">→</div>Setup Supabase + migrações</div>
+        <div class="task-item"><div class="task-check">→</div>Design system base (cores, tipografia)</div>
+        <div class="task-item"><div class="task-check">→</div>Layout (cadete vs staff) + middleware</div>
+        <div class="task-item"><div class="task-check">→</div>Landing page pública</div>
+        <div class="task-item"><div class="task-check">→</div>Deploy inicial no Vercel</div>
+      </div>
+    </div>
+
+    <div class="timeline-phase">
+      <div class="phase-header">
+        <span class="phase-num">FASE 02</span>
+        <span class="phase-name">Core — Requisições e Elegibilidade</span>
+      </div>
+      <div class="phase-tasks">
+        <div class="task-item"><div class="task-check">→</div>Motor de elegibilidade (8 critérios)</div>
+        <div class="task-item"><div class="task-check">→</div>Integração API 42 Intra completa</div>
+        <div class="task-item"><div class="task-check">→</div>Cache Redis para elegibilidade</div>
+        <div class="task-item"><div class="task-check">→</div>Dashboard do cadete (Mod.01)</div>
+        <div class="task-item"><div class="task-check">→</div>Formulário de requisição (Mod.02)</div>
+        <div class="task-item"><div class="task-check">→</div>Fila em tempo real com Pusher (Mod.03)</div>
+        <div class="task-item"><div class="task-check">→</div>Dashboard operacional staff (Mod.11)</div>
+        <div class="task-item"><div class="task-check">→</div>Gestão de requisições staff (Mod.12)</div>
+        <div class="task-item"><div class="task-check">→</div>Timer de sessão (1h + extensão)</div>
+        <div class="task-item"><div class="task-check">→</div>Bloqueio automático por horário/exames</div>
+      </div>
+    </div>
+
+    <div class="timeline-phase">
+      <div class="phase-header">
+        <span class="phase-num">FASE 03</span>
+        <span class="phase-name">Gaming Hub</span>
+      </div>
+      <div class="phase-tasks">
+        <div class="task-item"><div class="task-check">→</div>Catálogo de jogos aprovados (Mod.04)</div>
+        <div class="task-item"><div class="task-check">→</div>Sistema de rankings e leaderboard (Mod.05)</div>
+        <div class="task-item"><div class="task-check">→</div>Registo de resultados de partidas</div>
+        <div class="task-item"><div class="task-check">→</div>Sistema de conquistas e badges (Mod.06)</div>
+        <div class="task-item"><div class="task-check">→</div>Módulo de torneios com brackets (Mod.07)</div>
+        <div class="task-item"><div class="task-check">→</div>Perfil completo do cadete (Mod.08)</div>
+        <div class="task-item"><div class="task-check">→</div>Histórico de sessões (Mod.09)</div>
+        <div class="task-item"><div class="task-check">→</div>Gestão de jogos pelo staff (Mod.14)</div>
+      </div>
+    </div>
+
+    <div class="timeline-phase">
+      <div class="phase-header">
+        <span class="phase-num">FASE 04</span>
+        <span class="phase-name">Gestão Disciplinar e Segurança</span>
+      </div>
+      <div class="phase-tasks">
+        <div class="task-item"><div class="task-check">→</div>Sistema de denúncias (Mod.10)</div>
+        <div class="task-item"><div class="task-check">→</div>Gestão de cadetes pelo staff (Mod.13)</div>
+        <div class="task-item"><div class="task-check">→</div>Registo de incidentes e danos (Mod.15)</div>
+        <div class="task-item"><div class="task-check">→</div>Painel disciplinar completo (Mod.16)</div>
+        <div class="task-item"><div class="task-check">→</div>Audit logs de todas as acções</div>
+        <div class="task-item"><div class="task-check">→</div>Sistema de notificações (email + push)</div>
+        <div class="task-item"><div class="task-check">→</div>Configurações do sistema (Mod.18)</div>
+      </div>
+    </div>
+
+    <div class="timeline-phase">
+      <div class="phase-header">
+        <span class="phase-num">FASE 05</span>
+        <span class="phase-name">Analytics, PWA e Produção</span>
+      </div>
+      <div class="phase-tasks">
+        <div class="task-item"><div class="task-check">→</div>Dashboard analytics staff (Mod.17)</div>
+        <div class="task-item"><div class="task-check">→</div>Exportação de relatórios PDF</div>
+        <div class="task-item"><div class="task-check">→</div>PWA (Progressive Web App)</div>
+        <div class="task-item"><div class="task-check">→</div>Notificações push (Web Push API)</div>
+        <div class="task-item"><div class="task-check">→</div>Testes unitários (Vitest)</div>
+        <div class="task-item"><div class="task-check">→</div>Testes E2E (Playwright)</div>
+        <div class="task-item"><div class="task-check">→</div>Optimizações de performance</div>
+        <div class="task-item"><div class="task-check">→</div>Documentação técnica completa</div>
+        <div class="task-item"><div class="task-check">→</div>Deploy em produção + monitorização</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand"><em>PS42</em> Luanda · System Blueprint</div>
+  <div class="footer-note">42 LUANDA · AGOSTO 2025 · V1.0 · TODOS OS DIREITOS RESERVADOS</div>
+</footer>
+
+<script>
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
